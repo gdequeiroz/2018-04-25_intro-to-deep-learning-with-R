@@ -1,0 +1,137 @@
+---
+title: "Building our network"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Building our network
+
+
+Input data: vectors
+Labels: scalars (1s and 0s)
+
+A type of network that performs well on such a problem is a simple stack of fully connected (“dense”) layers with relu activations: `layer_dense(units = 16, activation = "relu")`.
+
+The argument being passed to each dense layer (16) is the number of hidden units of the layer. A hidden unit is a dimension in the representation space of the layer. 
+
+Having more hidden units (a higher-dimensional representation space) allows your network to learn more complex representations, but it makes your network more computationally expensive and may lead to learning unwanted patterns (patterns that will improve performance on the training data but not on the test data).
+
+There are two key architecture decisions to be made about such stack of dense layers:
+
+1) How many layers to use.
+2) How many “hidden units” to chose for each layer.
+
+For the time being, you will have to trust us with the following architecture choice: two intermediate layers with 16 hidden units each, and a third layer which will output the scalar prediction regarding the sentiment of the current review. 
+
+The intermediate layers will use relu as their “activation function”, and the final layer will use a sigmoid activation so as to output a probability (a score between 0 and 1, indicating how likely the sample is to have the target “1”, i.e. how likely the review is to be positive). A relu (rectified linear unit) is a function meant to zero-out negative values, while a sigmoid “squashes” arbitrary values into the [0, 1] interval, thus outputting something that can be interpreted as a probability.
+
+## Constructing the model
+
+
+
+```{r}
+library(keras)
+
+model <- keras_model_sequential() %>%    # define a model
+  layer_dense(units = 16,                   
+              activation = "relu", 
+              input_shape = ncol(x_train)) %>% 
+  layer_dense(units = 16, 
+              activation = "relu") %>% 
+  layer_dense(units = 1, 
+              activation = "sigmoid")
+
+
+```
+```{r}
+summary(model)
+```
+
+## Compile And Fit The Model
+
+```{r}
+model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = c("accuracy")
+)
+```
+
+### Validating our Model
+
+In order to monitor during training the accuracy of the model on data it has never seen before, you’ll create a validation set by setting apart 10,000 samples from the original training data.
+
+
+```{r}
+validation_indices <- 1:10000
+
+# Validation Set
+x_validation <- x_train[validation_indices,]
+y_validation <- y_train[validation_indices]
+
+# Training Set
+partial_x_train <- x_train[-validation_indices,]
+partial_y_train <- y_train[-validation_indices]
+```
+
+## Fit (train) the model
+
+```{r}
+history <- model %>% fit(
+  partial_x_train, 
+  partial_y_train, 
+  epochs = 20, 
+  batch_size = 512,
+  validation_data = list(x_validation, y_validation)
+)
+```
+
+
+Let’s train a new network from scratch for four epochs and then evaluate it on the test data.
+
+```{r}
+
+model <- keras_model_sequential() %>% 
+  layer_dense(units = 16, 
+              activation = "relu", 
+              input_shape = c(10000)) %>% 
+  layer_dense(units = 16, 
+              activation = "relu") %>% 
+  layer_dense(units = 1, 
+              activation = "sigmoid")
+
+model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = c("accuracy")
+)
+
+model %>% fit(
+  x_train, 
+  y_train, 
+  epochs = 4, 
+  batch_size = 512)
+
+```
+
+## Evaluate
+
+```{r}
+results <- model %>% evaluate(x_test, y_test)
+results
+```
+
+So our fairly naive approach achieves an accuracy of 88%. With state-of-the-art approaches, one should be able to get close to 95%.
+
+
+## Predictions on new data
+
+```{r}
+model %>% predict(x_test[1:15,])
+```
+

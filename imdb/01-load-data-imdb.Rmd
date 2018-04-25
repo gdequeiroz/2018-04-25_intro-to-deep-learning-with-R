@@ -1,0 +1,30 @@
+---
+title: "Load Data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+load("../data/imdb_data.RData")
+```
+
+```{r}
+class(x_train)
+class(x_test)
+dim(x_train)
+dim(x_test)
+```
+
+
+```{r}
+str(x_train[1,])
+str(x_test[1,])
+
+```
+
+
+
+
