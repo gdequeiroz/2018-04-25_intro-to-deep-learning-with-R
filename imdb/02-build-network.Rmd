@@ -1,6 +1,8 @@
 ---
 title: "Building our network"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -48,6 +50,7 @@ model <- keras_model_sequential() %>%    # define a model
 
 
 ```
+
 ```{r}
 summary(model)
 ```
@@ -89,6 +92,7 @@ history <- model %>% fit(
   batch_size = 512,
   validation_data = list(x_validation, y_validation)
 )
+
 ```
 
 
